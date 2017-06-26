@@ -28,15 +28,20 @@ function [mean_throughput, num_rcvd_pkts] = get_mean_throughput()
     end
     
     % -------------- data preprocessing -------------- %
-    good_data = process_file(fp, filetype);
-
+    % the code below needs to be cleaned after test !! %
+    
+    % good_data: [time_stamp, num_rcvd_pkts, instant_throughput]
+    good_data = process_file(fp, filetype); 
+    
     % extract features from data matrix
-    time_stamp = good_data(1:end-1,1);
+    % time_stamp = good_data(1:end-1,1);
     throughput = good_data(1:end-1,3);
 
     % get the desired parameters for further processing
-    time_duration = time_stamp(end) - time_stamp(1);
-    mean_throughput = sum(throughput) / time_duration; % kbps
+    % time_duration = time_stamp(end) - time_stamp(1);
+    % mean_throughput = sum(throughput) / time_duration; % kbps 
+    % above is wrong
+    mean_throughput = mean(throughput); % unit: kbps
     num_rcvd_pkts = good_data(end,2);
 
 
@@ -44,6 +49,8 @@ function good_data = process_file(filename, filetype)
     % process the ZigBee txt file
     if(filetype == 0)
         [time, data] = readLogData(filename); 
+        good_data = ZigBeedata_preproc(time, data);
+        
     % process the WiFi txt file
     else   
         fileID = fopen(filename, 'r');
@@ -54,7 +61,7 @@ function good_data = process_file(filename, filetype)
         fclose(fileID);
         
         data = data';
-        good_data = data_preproc(data); %
+        good_data = WiFidata_preproc(data); %
     end
     
     
@@ -66,22 +73,42 @@ function [ TIME, DATA ] = readLogData( filename )
 %   TIME is a vector of timestamps converted to seconds
 %   DATA is a vector of the raw data from each packet
 
-fileID = fopen(filename, 'r');
-C = textscan(fileID, '%s %u %s %s', 'Delimiter', ','); % scan the log file
+    fileID = fopen(filename);
+    fgetl(fileID); % escape the first two lines
+    fgetl(fileID);
 
-times = cell2mat(C{1}); % get time value matrix
-DATA = cell2mat(C{4});  % get DATA value matrix
+    C = textscan(fileID, '%s %u %s %s', 'Delimiter', ','); % scan the log file
+    fclose(fileID);
 
-time_hours = str2num(times(:, 12:13)); % hour
-time_minutes = str2num(times(:, 15:16)); % minute
-time_seconds = str2num(times(:, 18:end)); % second
+    times = cell2mat(C{1}); % get time value matrix
+    DATA = cell2mat(C{4});  % get DATA value matrix
 
-TIME = time_hours * 3600+time_minutes * 60 + time_seconds;
+    time_hours = str2num(times(:, 12:13)); % hour
+    time_minutes = str2num(times(:, 15:16)); % minute
+    time_seconds = str2num(times(:, 18:end)); % second
 
+    TIME = time_hours * 3600+time_minutes * 60 + time_seconds;
 
+function good_data_out = ZigBeedata_preproc(time_in, data_in)
+    packet_size = 100; % 5 is the header_length, total = 105 byte / packet
+    [num_packets, ~] = size(data_in);
+    
+    % calculate the instant throughput
+    throughput = zeros(floor(num_packets/10),1);
+    time_stamp = throughput;
+    packets = num_packets * ones(floor(num_packets/10),1);
+    
+    for i = 1:num_packets
+       if(mod(i,10) == 0) % once every 10 packets, calculate the instant throughput
+           Q = fix(i/10);
+           time_stamp(Q) = time_in(10*Q); % do not need time_stamp
+           throughput(Q) = 10.0 * packet_size * 8 / (1000*(time_in(10*Q) - time_in(Q*10 - 9)));
+       end
+    end
+    good_data_out = [time_stamp, packets, throughput];
 
 % --------- functions below used for processing WiFi .txt File ---------- %    
-function good_data_out = data_preproc(data_in)
+function good_data_out = WiFidata_preproc(data_in)
 
     index_start = 0;
     [row, ~] = size(data_in);
