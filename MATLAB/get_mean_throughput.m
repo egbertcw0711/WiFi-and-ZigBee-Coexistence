@@ -6,14 +6,7 @@
 
 function [mean_throughput, num_rcvd_pkts] = get_mean_throughput()
     % choose the file from GUI prompt
-    [filename, path] = uigetfile('*.*', 'Select the Text File');
-    
-    % check whether the file is open or not
-    if(isempty(filename))
-        disp('Error to open the file')
-        return 
-    end
-    
+    [filename, path] = uigetfile('*.*', 'Select the Text File');   
     fp = strcat(path, filename); % file path
     
     % get the file extension
