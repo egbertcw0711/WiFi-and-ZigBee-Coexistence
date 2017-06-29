@@ -7,7 +7,8 @@
 /* DEVICE 1 */
 #if CONFIG == 1
 char *ssid = "ESPsoftAP_01";
-int channel = 11; // add the channel
+char *pass = "nickkoester";
+int channel = 11;
 float dBm = 20.5;
 unsigned int localUdpPort = 4210;  // local port to listen on
 #endif
@@ -15,6 +16,7 @@ unsigned int localUdpPort = 4210;  // local port to listen on
 /* DEVICE 2 */
 #if CONFIG == 2
 char *ssid = "ESPsoftAP_02";
+char *pass = "nickkoester";
 int channel = 11;
 float dBm = 20.5;
 unsigned int localUdpPort = 4220;  // local port to listen on
@@ -24,13 +26,16 @@ unsigned int localUdpPort = 4220;  // local port to listen on
 WiFiUDP Udp;
 
 /** Benchmarking **/
-const double timeInterval = 1;   // unit is seconds to calculate throughput
+const double timeInterval = 1;   // unit is seconds
 const int MS = 1000;             // used for convert seconds to ms
 const int US = 1000000;          // used for convert seconds to us
 
 
 //const int PACKET_SIZE = 600; // transmit packet size
 const int PACKET_SIZE = 1112;
+
+/* the packet size below is using for calculate the WiFi transmission rate */
+//const int PACKET_SIZE = 1100;
 
 double timestamp = 0;
 double packetsReceived = 0;
@@ -49,11 +54,9 @@ void benchOutput() {
   Serial.println(throughput); // Kbps
 }
 
-
-
 void capture() {
-  timestamp = micros() / US;
-  throughput = perPktRecvd * PACKET_SIZE * 8.0 / (1000 * timeInterval); // Kbps
+  timestamp = micros() / US; // unit in seconds
+  throughput = perPktRecvd * PACKET_SIZE * 8.0 / (1000 * timeInterval); // unit in Kbps
   perPktRecvd = 0;
   printFlag = true;
 }
@@ -76,8 +79,7 @@ void setupAccessPoint() {
   {
     Serial.println("Failed!");
   }
-
-  WiFi.printDiag(Serial);
+//  WiFi.printDiag(Serial);
 }
 
 void receiveMessage() {
