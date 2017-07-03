@@ -1,7 +1,7 @@
 %=========================================================================%
 % Program for investigating WiFi packet error rate without interference   %
 % Here considering the problem that STA encounters the problem when
-% managing packet sizes.                                                  %
+% managing large packet sizes.                                            %
 %=========================================================================%
 
 close all
