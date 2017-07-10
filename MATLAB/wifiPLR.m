@@ -1,7 +1,9 @@
 %=========================================================================%
 % Program for investigating WiFi packet error rate without interference   %
 % Here considering the problem that STA encounters the problem when
-% managing packet sizes.                                                  %
+% managing packet sizes. 
+% ----------------------------------------------------------------------- %
+% related file: wifiplr.csv
 %=========================================================================%
 
 close all
@@ -49,22 +51,4 @@ semilogx(packet_size, PER, 'r*-')
 xlabel('packet size (bytes per packet)')
 ylabel('packet error rate (%)')
 title('Packet Error Rate vs. PKT SIZE with constant delay 1ms')
-grid on
-
-%% plot Throughput vs. different packet_size
-[num, ~] = size(packet_size);
-throughput = zeros(num,1);
-
-% select file that packet size in increasing order
-% exclude the packet size 2048
-for i = 1:num-1
-   [throughput(i), ~] = get_mean_throughput();
-end
-
-%% plot
-figure,
-loglog(packet_size(1:5), throughput(1:5), 'r*-')
-xlabel('packet size (bytes per packet)')
-ylabel('throughput (kbps)')
-title('WiFi Throughput vs. Different Packet Size')
 grid on
