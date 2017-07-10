@@ -1,7 +1,7 @@
 %=========================================================================%
 % Program for investigating WiFi packet error rate without interference   %
 % Here considering the problem that STA encounters the problem when
-% managing large packet sizes.                                            %
+% managing packet sizes.                                                  %
 %=========================================================================%
 
 close all
@@ -61,9 +61,9 @@ for i = 1:num-1
    [throughput(i), ~] = get_mean_throughput();
 end
 
-% plot
+%% plot
 figure,
-semilogx(packet_size(1:5), throughput, 'r*-')
+loglog(packet_size(1:5), throughput(1:5), 'r*-')
 xlabel('packet size (bytes per packet)')
 ylabel('throughput (kbps)')
 title('WiFi Throughput vs. Different Packet Size')
