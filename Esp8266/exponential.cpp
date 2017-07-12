@@ -11,5 +11,5 @@ ExponentialDist::ExponentialDist(double interval, int seed = 1)
 double ExponentialDist::generate()
 {
   double u = rand() / (double) RAND_MAX;
-  return -MEAN * log(1-u); // using uniform distribution to generate exponential distribution
+  return -MEAN * log(1-u);
 }
