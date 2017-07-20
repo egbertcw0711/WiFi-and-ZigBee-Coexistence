@@ -2,12 +2,11 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
-#define CONFIG 1
+#define CONFIG 2
 
 /* DEVICE 1 */
 #if CONFIG == 1
 char *ssid = "ESPsoftAP_01";
-char *pass = "nickkoester";
 int channel = 11;
 float dBm = 20.5;
 unsigned int localUdpPort = 4210;  // local port to listen on
@@ -16,36 +15,35 @@ unsigned int localUdpPort = 4210;  // local port to listen on
 /* DEVICE 2 */
 #if CONFIG == 2
 char *ssid = "ESPsoftAP_02";
-char *pass = "nickkoester";
 int channel = 11;
 float dBm = 20.5;
 unsigned int localUdpPort = 4220;  // local port to listen on
 #endif
 
-/** Server **/
 WiFiUDP Udp;
 
-/** Benchmarking **/
+// timing 
 const double timeInterval = 1;   // unit is seconds
 const int MS = 1000;             // used for convert seconds to ms
 const int US = 1000000;          // used for convert seconds to us
+bool printFlag = false;
 
-
-//const int PACKET_SIZE = 600; // transmit packet size
-const int PACKET_SIZE = 1112;
-
-/* the packet size below is using for calculate the WiFi transmission rate */
-//const int PACKET_SIZE = 1100;
+// the packet sizes below is using for calculate the WiFi transmission rate 
+//const int PACKET_SIZE = 2048;
+const int PACKET_SIZE = 1024;
+//const int PACKET_SIZE = 512;
+//const int PACKET_SIZE = 128;
 
 double timestamp = 0;
 double packetsReceived = 0;
 
+// use for calculating throughput
 double perPktRecvd = 0;
 double throughput = 0;
 
 Ticker tick;
-bool printFlag = false;
 
+// print time, number of received packet and WiFi throughput
 void benchOutput() {
   Serial.print(timestamp);
   Serial.print("\t");
@@ -54,6 +52,7 @@ void benchOutput() {
   Serial.println(throughput); // Kbps
 }
 
+// calculate the throughput
 void capture() {
   timestamp = micros() / US; // unit in seconds
   throughput = perPktRecvd * PACKET_SIZE * 8.0 / (1000 * timeInterval); // unit in Kbps
@@ -65,12 +64,12 @@ void setupAccessPoint() {
   //Clear old configuration
   WiFi.softAPdisconnect();
   WiFi.disconnect();
-  WiFi.mode(WIFI_AP);
+  WiFi.mode(WIFI_AP); // receiver:AP, STA -> AP
   WiFi.setOutputPower(dBm);
   delay(100);
 
   Serial.print("Setting soft-AP ... ");
-  boolean result = WiFi.softAP(ssid, pass, channel);
+  boolean result = WiFi.softAP(ssid, NULL, channel);
   if(result == true)
   {
     Serial.println("Ready");
@@ -79,13 +78,12 @@ void setupAccessPoint() {
   {
     Serial.println("Failed!");
   }
-//  WiFi.printDiag(Serial);
 }
 
 void receiveMessage() {
   int packetSize = Udp.parsePacket();
 
-  if(packetSize == PACKET_SIZE) {
+  if(packetSize) {
     packetsReceived++;
     perPktRecvd++;
   }
@@ -112,7 +110,7 @@ void setup()
 void loop()
 {
   receiveMessage();
-
+  // print info once every 1 second
   if(printFlag) {
     benchOutput();
     printFlag = false;

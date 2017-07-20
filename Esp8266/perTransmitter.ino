@@ -3,12 +3,11 @@
 #include <string>
 #include "exponential.h"
 
-#define CONFIG 1
+#define CONFIG 2
 
 /* DEVICE 1 */
 #if CONFIG == 1
 char *ssid = "ESPsoftAP_01";
-char *pass = "nickkoester";
 float dBm = 20.5;
 unsigned int serverPort = 4210;
 unsigned int localPort = 2390;
@@ -17,7 +16,6 @@ unsigned int localPort = 2390;
 /* DEVICE 2 */
 #if CONFIG == 2
 char *ssid = "ESPsoftAP_02";
-char *pass = "nickkoester";
 float dBm = 20.5;
 unsigned int serverPort = 4220;
 unsigned int localPort = 2290;
@@ -26,31 +24,31 @@ unsigned int localPort = 2290;
 IPAddress receiverIP(0, 0, 0, 0);
 WiFiUDP Udp;
 
-/* TRANSMITTER PARAMETERS */
-int NUM_PACKETS = 50000;
+// total # packets to send
+//unsigned long NUM_PACKETS = 200000;
 
-/* config different packet size for transmission */
-//const int packetSize = 1500;
-//const int packetSize = 600;
-const int packetSize = 1112;
+// using different packet size to calculate the WiFi transmission rate
+//const int packetSize = 2048;
+const int packetSize = 1024;
+//const int packetSize = 512;
+//const int packetSize = 128;
 
-/* using different packet size to calculate the WiFi transmission rate */
-//const int packetSize = 1100;
-
-const double arrivalRate = 1;
-const int generatorSeed = 1;
+// setup exponential random delay class
+const double meanDelay = 0;
+const int generatorSeed = 123;
+const int offset = 10;
+ExponentialDist randomNum(meanDelay, generatorSeed, offset); // constrcutor
 
 std::string message(packetSize, 'A');
-ExponentialDist randomNum(arrivalRate, generatorSeed);
 
 int num_transmission = 0; // count number of successful transmission
+//unsigned int tmp = 0;
+
 unsigned long sendPacket(IPAddress& address) {
-  //if (!Udp.beginPacket(address, serverPort)) {
-    //Serial.println("Error in Udp.beginPacket()");
-  //}
-  Udp.beginPacket(address, serverPort);
+  if (!Udp.beginPacket(address, serverPort)) {
+    Serial.println("Error in Udp.beginPacket()");
+  }
   Udp.write(message.c_str());
-//  Udp.endPacket();
   // check whether transmitter successfully transmitted the packets
   if (Udp.endPacket()) {
     ++num_transmission;
@@ -62,14 +60,16 @@ void connectToServer() {
   //Clear old configuration
   WiFi.softAPdisconnect();
   WiFi.disconnect();
-  WiFi.mode(WIFI_STA);
+  
+  WiFi.mode(WIFI_STA); // STA to AP
+  
   WiFi.setOutputPower(dBm);
   delay(300);
   
   Serial.print("Attempting to connect to SSID: ");
   Serial.print(ssid);
   
-  WiFi.begin(ssid, pass);
+  WiFi.begin(ssid);
   
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
@@ -97,32 +97,43 @@ void setup() {
   connectToServer();
 }
 
-int i = 0;                    // count number of sending times
-
+unsigned long i = 0;                    // count number of sending times
+//unsigned long start_time = 0;
+//unsigned long end_time = 0;
 void loop() {
-  //Serial.println("Sending packets...");
+  // generate exponential deistribution from [10, inf)
+  for(int j = 0; j < 500; ++j) {
+    Serial.println(randomNum.generate());  
+  }
+  delay(100000000);  
 
-  /* Here is used for testing ZigBee Throughput with and without WiFi Interference */
-////   digitalWrite(16, HIGH);
+  // Here is used for testing ZigBee Throughput with and without WiFi Interference //
+//   digitalWrite(16, HIGH);
 //   sendPacket(receiverIP); // send an packet to server
-////   digitalWrite(16, LOW);
-//////   delay(randomNum.generate()); // add random exponential delay
-//////   delay(0.3);                      // ms, used for delay above 1ms
+//   digitalWrite(16, LOW);
+////   delay(randomNum.generate()); // add random exponential delay
+//   digitalWrite(16, LOW);
 //   delayMicroseconds(100);         // us, add constant delay below 1us
+//   delay(20);
+//   digitalWrite(16, LOW);
   /* ***************************************************************************** */
   
-  /* Here is used for testing WiFi Throughput with and without ZigBee Interference */
-  if( i < NUM_PACKETS) {
-      sendPacket(receiverIP);        // send an packet to access point
-//      delay(randomNum.generate()); // exponential random delay
-      delayMicroseconds(500);      // constant delay
+  // Here is used for testing WiFi Throughput with and without ZigBee Interference //
+//  if( i < NUM_PACKETS) {
+////      if(i == 0) {
+////        start_time = micros(); // at  the start of the transmission  
+////        Serial.println(start_time);
+////      }
+//      sendPacket(receiverIP);        // send an packet to access point
+////      delay(randomNum.generate()); // exponential random delay
+////      delayMicroseconds(100);        // constant delay
 //      delay(200);
-      ++i;
-  }
-  else {
-    // print how many packets are sent
-    Serial.printf("total successful transmission: %d\n", num_transmission);
-    delay(10000);
-  }
+//      ++i;
+//  }
+//  else {
+//    // print how many packets are sent
+//    Serial.printf("total successful transmission: %d\n", num_transmission);
+//    delay(1000000);
+//  }
   /* **************************************************************************** */
 } // end loop
