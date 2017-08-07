@@ -24,14 +24,17 @@ unsigned int localPort = 2290;
 IPAddress receiverIP(0, 0, 0, 0);
 WiFiUDP Udp;
 
-// total # packets to send
-//unsigned long NUM_PACKETS = 200000;
+// total # packets to send at the transmitter
+// this variable need to be modified when doing the experiment to save time!
+unsigned long NUM_PACKETS = 2000000;
+////////////////////////////////////
 
 // using different packet size to calculate the WiFi transmission rate
 //const int packetSize = 2048;
-const int packetSize = 1024;
-//const int packetSize = 512;
+//const int packetSize = 1024;
+const int packetSize = 512;
 //const int packetSize = 128;
+////////////////////////////////////
 
 // setup exponential random delay class
 const double meanDelay = 0;
@@ -82,7 +85,6 @@ void connectToServer() {
   if (!Udp.begin(localPort)) {
     Serial.println("UDP connection failed");
   }
-//  WiFi.printDiag(Serial);
 }
 
 void setup() {
@@ -93,47 +95,40 @@ void setup() {
   Serial.print("Using configuration: ");
   Serial.println(CONFIG);
   
-//  pinMode(16, OUTPUT);
   connectToServer();
 }
 
 unsigned long i = 0;                    // count number of sending times
-//unsigned long start_time = 0;
-//unsigned long end_time = 0;
-void loop() {
-  // generate exponential deistribution from [10, inf)
-  for(int j = 0; j < 500; ++j) {
-    Serial.println(randomNum.generate());  
-  }
-  delay(100000000);  
 
-  // Here is used for testing ZigBee Throughput with and without WiFi Interference //
-//   digitalWrite(16, HIGH);
-//   sendPacket(receiverIP); // send an packet to server
-//   digitalWrite(16, LOW);
-////   delay(randomNum.generate()); // add random exponential delay
-//   digitalWrite(16, LOW);
-//   delayMicroseconds(100);         // us, add constant delay below 1us
-//   delay(20);
-//   digitalWrite(16, LOW);
-  /* ***************************************************************************** */
-  
-  // Here is used for testing WiFi Throughput with and without ZigBee Interference //
-//  if( i < NUM_PACKETS) {
-////      if(i == 0) {
-////        start_time = micros(); // at  the start of the transmission  
-////        Serial.println(start_time);
-////      }
-//      sendPacket(receiverIP);        // send an packet to access point
-////      delay(randomNum.generate()); // exponential random delay
-////      delayMicroseconds(100);        // constant delay
-//      delay(200);
-//      ++i;
-//  }
-//  else {
-//    // print how many packets are sent
-//    Serial.printf("total successful transmission: %d\n", num_transmission);
-//    delay(1000000);
-//  }
-  /* **************************************************************************** */
+void loop() {
+
+  // if choice true, generate inf packets 
+  bool choice = false;
+  ///////////////////////////////
+
+  // generate inf packets
+  if(choice) {
+    sendPacket(receiverIP); // send an packet to server
+    // delay(randomNum.generate()); // add random exponential delay
+    delayMicroseconds(100);         // us, add constant delay below 1us
+    // delay(20);
+    ///////////////////////////////
+
+  }
+  // generate certain amount of packets
+  else {
+   if( i < NUM_PACKETS) {
+        sendPacket(receiverIP);        // send an packet to access point
+        // delay(randomNum.generate()); // exponential random delay
+        delayMicroseconds(100);        // constant delay
+        // delay(15);
+        ++i;
+        /////////////////////////////
+    }
+    else {
+      // print how many packets are sent
+      Serial.printf("total successful transmission: %d\n", num_transmission);
+      delay(1000000);
+    }
+  }
 } // end loop
