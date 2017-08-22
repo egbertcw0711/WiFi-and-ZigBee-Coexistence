@@ -10,7 +10,7 @@ clear, clc
 
 % load wifi throughput wifi constant delay
 load('.\WiFiUnderZB\WIFI512out20.5ZB10byte10ms_0814.mat')
-wifi512out20dot5withZB10B10ms = wifi_throughput_interference;
+wifi512out20dot5withZB10B10ms_lowCCA = wifi_throughput_interference;
 
 load('.\WiFiUnderZB\WIFI512out10ZB10byte10ms_0814.mat')
 wifi512out10withZB10B10ms = wifi_throughput_interference;
@@ -98,7 +98,7 @@ figure,
 errorbar(wifi512out10withZB10B10ms, zigbee10byte10ms_wifiout10,...
     zigbee10byte10ms_wifiout10_var, 'bx--')
 hold on
-errorbar(wifi512out20dot5withZB10B10ms, zigbee10byte10ms_wifiout205, ...
+errorbar(wifi512out20dot5withZB10B10ms_lowCCA, zigbee10byte10ms_wifiout205, ...
     zigbee10byte10ms_wifiout205_var, 'rx--')
 
 errorbar(wifi512out5withZB10B10ms, zigbee10byte10ms_wifiout5, ...
@@ -116,57 +116,148 @@ grid on
 title('CCA: -44(dbm)')
 % set(gca,'xscale','log');
 
-%% modified on 2017-08-21
-% load the corresponding data
-% wifi output power 20.5dbm, const delay
-load('.\WiFiUnderZB\WIFI512out20.5ZB10byte10ms_0814.mat')
-wifi512out20dot5withZB10B10ms = wifi_throughput_interference;
-% wifi output power 20.5dbm exponential delay
+%% modified on 2017-08-22
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
+% compare zigbee throughput with const and exponential delay under the %
+% same wifi output power, i.e. 20.5 dbm and CCA: -76dbm                %
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
+
+% wifi output power 20.5dbm, const delay, CCA: -76dbm -- 2017-08-22
+load('.\WiFiUnderZB\WIFI512out20.5ZB10byte10ms_0822.mat')
+wifi512out20dot5withZB10B10ms_lowCCA = wifi_throughput_interference;
+
+% wifi output power 20.5dbm exponential delay, CCA: -76dbm
 load('.\WiFiUnderZB\WIFI512out20.5_expZB10byte10ms_0821.mat')
 wifi512out20dot5expwithZB10B10ms = wifi_throughput_interference;
-% wifi output power 5dbm exponential delay
-load('.\WiFiUnderZB\WIFI512out5_expZB10byte10ms_0821.mat')
-wifi512out5expwithZB10B10ms = wifi_throughput_interference;
 
-% zigbee throughput under wifi output power 20.5dbm constant delay
-load('.\ZigbeeThroughput\zigbee10byte10ms_wifiout20.5dbm_var.mat')
-zigbee10byte10ms_wifiout205 = t(:,1); 
-zigbee10byte10ms_wifiout205_var = sqrt(t(:,2));
-% zigbee throughput under wifi output power 20.5dbm exp delay
+% zigbee throughput under wifi output power 20.5dbm, const delay CCA: -76dbm
+load('.\ZigbeeThroughput\zigbee10byte10ms_wifiout20.5constdbm_var.mat')
+zigbee10byte10ms_wifiout205_lowCCA = t(:,1); 
+zigbee10byte10ms_wifiout205_var_lowCCA = sqrt(t(:,2));
+
+% zigbee throughput under wifi output power 20.5dbm, exp delay CCA: -76dbm
 load('.\ZigbeeThroughput\zigbee10byte10ms_wifiout20.5expdbm_var.mat')
 zigbee10byte10ms_wifiout20dot5exp = t(:,1);
 zigbee10byte10ms_wifiout20dot5exp_var = sqrt(t(:,2));
-% zigbee throughpuyt under wifi output power 5dbm exp delay
+
+figure,
+errorbar(wifi512out20dot5withZB10B10ms_lowCCA, zigbee10byte10ms_wifiout205_lowCCA, ...
+    zigbee10byte10ms_wifiout205_var_lowCCA, 'rx--')
+hold on
+errorbar(wifi512out20dot5expwithZB10B10ms, zigbee10byte10ms_wifiout20dot5exp, ...
+    zigbee10byte10ms_wifiout20dot5exp_var, 'bx--')
+hold off
+title('CCA : -76dbm,  WIFI power: 20.5dbm')
+legend('const delay', 'exp delay')
+xlabel('WiFi throughput (kbps)')
+ylabel('ZigBee throughput (kbps)')
+grid on
+% set(gca,'xscale','log');
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
+% plot the graph with different ZigBee CCA threshold under the same WiFi  %
+% output power, i.e. 20.5dbm and constant delay                                                 %
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
+
+% wifi output power 20.5dbm, const delay, CCA: -44dbm -- 2017-08-14
+load('.\WiFiUnderZB\WIFI512out20.5ZB10byte10ms_0814.mat')
+wifi512out20dot5withZB10B10ms = wifi_throughput_interference;
+
+% zigbee throughput under wifi output power 20.5dbm, const delay, CCA:-44dbm
+load('.\ZigbeeThroughput\zigbee10byte10ms_wifiout20.5dbm_var.mat')
+zigbee10byte10ms_wifiout205 = t(:,1); 
+zigbee10byte10ms_wifiout205_var = sqrt(t(:,2));
+
+figure,
+% CCA: -44dbm
+errorbar(wifi512out20dot5withZB10B10ms, zigbee10byte10ms_wifiout205, ...
+    zigbee10byte10ms_wifiout205_var, 'rx--')
+hold on
+% CCA: -76dbm
+errorbar(wifi512out20dot5withZB10B10ms_lowCCA, zigbee10byte10ms_wifiout205_lowCCA, ...
+    zigbee10byte10ms_wifiout205_var_lowCCA, 'bx--')
+hold off
+legend('-44dbm', '-76dbm')
+xlabel('WiFi throughput (kbps)')
+ylabel('ZigBee throughput (kbps)')
+title('WiFi constant delay with output power 20.5dbm')
+grid on
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
+% compare zigbee throughput with different wifi power using exp delay %
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
+
+% wifi output power 5dbm, exponential delay, CCA:-76dbm
+load('.\WiFiUnderZB\WIFI512out5_expZB10byte10ms_0821.mat')
+wifi512out5expwithZB10B10ms = wifi_throughput_interference;
+
+% zigbee throughpuyt under wifi output power 5dbm, exp delay, CCA: -76dbm
 load('.\ZigbeeThroughput\zigbee10byte10ms_wifiout5expdbm_var.mat')
 zigbee10byte10ms_wifiout5exp = t(:,1);
 zigbee10byte10ms_wifiout5exp_var = sqrt(t(:,2));
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
-% compare zigbee throughput with const and exponential delay under the %
-% same wifi output power, i.e. 20.5 dbm                                %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
 figure,
-% const wifi delay
-errorbar(wifi512out20dot5withZB10B10ms, zigbee10byte10ms_wifiout205, ...
-    zigbee10byte10ms_wifiout205_var, 'rx--')
-hold on
-% exp wifi delay
 errorbar(wifi512out20dot5expwithZB10B10ms, zigbee10byte10ms_wifiout20dot5exp, ...
     zigbee10byte10ms_wifiout20dot5exp_var, 'bx--')
-hold off
-legend('const delay', 'exp delay')
-grid on
-set(gca,'xscale','log');
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
-% compare zigbee throughput with different wifi power using exp delay %
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
-figure,
-errorbar(wifi512out20dot5expwithZB10B10ms, zigbee10byte10ms_wifiout20dot5exp, ...
-    zigbee10byte10ms_wifiout20dot5exp_var, 'rx--')
 hold on
+errorbar(wifi512out5expwithZB10B10ms, zigbee10byte10ms_wifiout5exp, ...
+    zigbee10byte10ms_wifiout5exp_var, 'rx--')
+hold off
+title('WiFi Exponential delay, CCA: -76(dbm)')
+legend('20.5dbm', '5.0dbm')
+xlabel('WiFi throughput (kbps)')
+ylabel('ZigBee throughput (kbps)')
+grid on
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
+% plot the graph with different ZigBee CCA threshold under the same WiFi  %
+% output power, i.e. 5dbm                                                 %
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
+
+% wifi output power 5dbm exponential delay CCA:-44dbm
+load('.\WiFiUnderZB\WIFI512out5ZB10bye10ms_exp_0822.mat')
+wifi512out5expwithZB10B10ms_highCCA = wifi_throughput_interference;
+
+% zigbee throughput under wifi output power 5dbm exp delay CCA: -44dbm
+load('.\ZigbeeThroughput\zigbee10byte10ms_wifiout5dbm_exp_var.mat')
+zigbee10byte10ms_wifiout5exp_highCCA = t(:,1);
+zigbee10byte10ms_wifiout5exp_var_highCCA = sqrt(t(:,2));
+
+figure,
+errorbar(wifi512out5expwithZB10B10ms_highCCA, zigbee10byte10ms_wifiout5exp_highCCA, ...
+    zigbee10byte10ms_wifiout5exp_var_highCCA, 'rx--')
+hold on
+
+% low CCA: -76dbm
 errorbar(wifi512out5expwithZB10B10ms, zigbee10byte10ms_wifiout5exp, ...
     zigbee10byte10ms_wifiout5exp_var, 'bx--')
 hold off
-title('CCA: -76(dbm)')
-legend('20.5dbm', '5.0dbm')
+title('WiFi exponential delay, output power 5dbm')
+legend('-44dbm', '-76dbm')
+xlabel('WiFi throughput (kbps)')
+ylabel('ZigBee throughput (kbps)')
 grid on
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
+% plot the graph with the same ZigBee CCA threshold, WiFi exponential delay
+% with different WiFi output power
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
+figure,
+errorbar(wifi512out20dot5withZB10B10ms, zigbee10byte10ms_wifiout205, ...
+    zigbee10byte10ms_wifiout205_var, 'rx--') % needs to be changed to exponential delay
+hold on,
+errorbar(wifi512out5expwithZB10B10ms_highCCA, zigbee10byte10ms_wifiout5exp_highCCA, ...
+    zigbee10byte10ms_wifiout5exp_var_highCCA, 'bx--')
+hold off
+
+xlabel('WiFi throughput (kbps)')
+ylabel('ZigBee throughput (kbps)')
+legend('WiFi output power 20.5dbm', 'WiFi output power 5dbm')
+title('WiFi exponential delay, CCA: -44dbm # CHANGE TO EXPONENTIAL DELAY! #')
+grid on
+
