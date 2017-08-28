@@ -376,3 +376,39 @@ grid on
 xlabel('wifi throughout (kbps)')
 ylabel('zigbee throughput (kbps)')
 set(gca, 'xscale', 'log');
+
+%%
+figure(11)
+load('.\ZigbeeThroughput\zigbee10byte10ms_wifiB1500out20.5dbm_var.mat')
+zigbee10byte10ms_wifiB1500out205exp = t(:,1);
+zigbee10byte10ms_wifiB1500out205exp_var = sqrt(t(:,2));
+
+load('.\WiFiUnderZB\WIFIB1500out20.5ZB10B10ms.mat')
+wifiB1500out205expwithZB10B10ms_lowCCA = wifi_throughput_interference;
+
+errorbar(wifi1500out205expwithZB10B10ms_lowCCA, zigbee10byte10ms_wifi1500out205exp, ...
+    zigbee10byte10ms_wifi1500out205exp_var, 'r--')
+hold on
+errorbar(wifiB1500out205expwithZB10B10ms_lowCCA, zigbee10byte10ms_wifiB1500out205exp, ...
+    zigbee10byte10ms_wifiB1500out205exp_var, 'b--')
+
+legend('11N', '11B')
+xlabel('WiFi throughput (kbps)')
+ylabel('ZigBee throughput (kbps)')
+title('Compare 11B and 11N under the same situation')
+grid on
+set(gca, 'xscale', 'log');
+
+figure(12)
+errorbar(1500 * 8 ./ wifi1500out205expwithZB10B10ms_lowCCA, zigbee10byte10ms_wifi1500out205exp, ...
+    zigbee10byte10ms_wifi1500out205exp_var, 'r--')
+hold on
+errorbar(1500 * 8 ./ wifiB1500out205expwithZB10B10ms_lowCCA, zigbee10byte10ms_wifiB1500out205exp, ...
+    zigbee10byte10ms_wifiB1500out205exp_var, 'b--')
+
+legend('11N', '11B')
+xlabel('WiFi avg transmission interval (ms)')
+ylabel('ZigBee throughput (kbps)')
+title('Compare 11B and 11N under the same situation')
+grid on
+set(gca, 'xscale', 'log');
