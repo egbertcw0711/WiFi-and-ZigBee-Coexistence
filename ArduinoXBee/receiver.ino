@@ -11,6 +11,7 @@ Rx16Response rx16 = Rx16Response();
 unsigned int otherError = 0; // other errors
 unsigned int pktLoss = 0; // number of packet loss
 unsigned int pktRcvd = 0; // number of packets received
+unsigned int rest = 0; // the rest
 
 // calculating throughput
 unsigned int perPktRcvd = 0;
@@ -26,15 +27,12 @@ const unsigned dataLen = 10; // we need to change the data length
 void benchOutput() {
   // calculate the throughput
   throughput = perPktRcvd * dataLen * 8.0 * 1000.0 / time_elapse; // App TMT unit in Kbps 
-  double avgTrans_time = perPktRcvd * 1000000.0 / time_elapse; // average delay: packet/sec
+  // double avgTrans_time = perPktRcvd * 1000000.0 / time_elapse; // average delay: packet/sec
 
-  Serial.print("time elapse: ");
+  Serial.print("time elapse: ");  
   Serial.print(time_elapse);
   Serial.print("\tperPktRcvd: ");
-  Serial.print(perPktRcvd);
-
-  Serial.print("\tavg packet/sec: ");
-  Serial.println(avgTrans_time);
+  Serial.println(perPktRcvd);
   
   Serial.print("pktRcvd: ");
   Serial.println(pktRcvd);
@@ -44,10 +42,14 @@ void benchOutput() {
   
   Serial.print("otherError: ");
   Serial.println(otherError);
+
+//  Serial.print("rest: ");
+//  Serial.println(rest);
   
   Serial.print("throughpout: ");
   Serial.println(throughput); // Kbps
   Serial.println("\n");
+
 }
 
 void setup() {
@@ -56,7 +58,7 @@ void setup() {
   serial.begin(57600);
   xbee.setSerial(serial);
 
-  pinMode(11, OUTPUT);
+//  pinMode(11, OUTPUT);
   Serial.println("\nReceiver Setup finished!");
 }
 
@@ -80,6 +82,9 @@ void loop() {
       // PACKET_EXCEEDS_BYTE_ARRAY_LENGTH(2), UNEXPECTED_START_BYTE(3)
       otherError += 1;
     } 
+    else {
+      rest += 1;
+    }
     
     time_elapse += micros() - start_time;
     if(time_elapse >= 5000000) { // 5000ms
