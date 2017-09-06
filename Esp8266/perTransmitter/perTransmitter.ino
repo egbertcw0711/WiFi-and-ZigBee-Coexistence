@@ -1,7 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <string>
-//#include "FS.h"
 //#include "exponential.h"
 
 #define CONFIG 2
@@ -27,22 +26,21 @@ WiFiUDP Udp;
 
 // total # packets to send at the transmitter
 // this variable need to be modified when doing the experiment to save time!
-unsigned long NUM_PACKETS = 2000000;
+//unsigned long NUM_PACKETS = 2000000;
 ////////////////////////////////////
 
 // using different packet size to calculate the WiFi transmission rate
-//const int packetSize = 2048;
-//const int packetSize = 1472;
-//const int packetSize = 472;
-//const int packetSize = 512;
 const int packetSize = 1500;
 ////////////////////////////////////
 
-// setup exponential random delay class
+double Delay[13] = {0, 100, 200, 300, 500, 1000, 2000, 4000, 8000, 15000, 20000, 50000, 100000};
+
+/* setup exponential random delay class
 //const double meanDelay = 50000; // {0, 0.1, 0.2, 0.3, 0.5, 1, ,2 ,4 ,8, 10, 15, 20, 50, 100, 200}
 //const int generatorSeed = 123;
 //const int offset = 0;
 //ExponentialDist randomNum(meanDelay, generatorSeed, offset); // constrcutor
+*/
 
 std::string message(packetSize, 'A');
 
@@ -102,38 +100,32 @@ void setup() {
   WiFi.printDiag(Serial);
 }
 
-unsigned long i = 0;                    // count number of sending times
+int i = 0;                    // count number of sending times
 unsigned long t2 = 0;
 unsigned long t1;
+int count = 0;
 
 void loop() {
 
   // generate inf packets
     t1 = micros();
-    if(t2 % 1000 == 0){
+    // reduce the serial.println()
+    if(t2 % 500 == 0){
       Serial.println(t1-t2);
+      count += 1;
+      if(count == 200) {
+        count = 0;
+        i += 1;
+        Serial.println("delay changed ... ");
+        if(i == 13) {
+         Serial.println("finish the experiment!\n");
+         delay(999999999); 
+         }
+        delay(4000);
+      }
     }
     sendPacket(receiverIP); // send an packet to server
     t2 = micros();
-//    Serial.println
-//    delayMicroseconds(100);         // us, add constant delay below 1us
-    // delay(20);
+    delayMicroseconds(Delay[i]);         // us, add constant delay below 1us
   ///////////////////////////////
-
-  // generate certain amount of packets
-//  if( i < NUM_PACKETS) {
-//        sendPacket(receiverIP);        // send an packet to access point
-//        // set the constant delay or exponential delay
-////        delayMicroseconds(randomNum.generate());
-////        delay(randomNum.generate()); // exponential random delay
-////        delayMicroseconds(100);        // constant delay more accurate
-////        delay(200);
-//        ++i;
-//        ////////////////////////////////////////////////////////////////
-//   }
-//   else {
-//      // print how many packets are sent
-//      Serial.printf("total successful transmission: %d\n", num_transmission);
-//      delay(1000000);
-//   }
 } // end loop
