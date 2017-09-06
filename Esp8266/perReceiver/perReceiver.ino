@@ -84,7 +84,6 @@ void setupAccessPoint() {
 
 void receiveMessage() {
   int packetSize = Udp.parsePacket();
-
   if(packetSize) {
     packetsReceived++;
     perPktRecvd++;
@@ -109,7 +108,7 @@ void setup()
   Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
 
   tick.attach(timeInterval, capture);
-  Serial.println("Starting count...");
+  Serial.println("Starting receiving...");
 }
 
 void loop()

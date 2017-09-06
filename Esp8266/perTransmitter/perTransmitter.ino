@@ -1,7 +1,8 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <string>
-//#include "exponential.h"
+#include <Ticker.h> // use for batch experiment
+//#include "exponential.h" // use exponential delay
 
 #define CONFIG 2
 
@@ -24,14 +25,18 @@ unsigned int localPort = 2290;
 IPAddress receiverIP(0, 0, 0, 0);
 WiFiUDP Udp;
 
+// timing
+const double timeInterval = 5; // in seconds
+double timeStamp = 0;
+bool printFlag = false;
+
+Ticker tick;
+
 // total # packets to send at the transmitter
-// this variable need to be modified when doing the experiment to save time!
 //unsigned long NUM_PACKETS = 2000000;
-////////////////////////////////////
 
 // using different packet size to calculate the WiFi transmission rate
 const int packetSize = 1500;
-////////////////////////////////////
 
 double Delay[13] = {0, 100, 200, 300, 500, 1000, 2000, 4000, 8000, 15000, 20000, 50000, 100000};
 
@@ -42,9 +47,15 @@ double Delay[13] = {0, 100, 200, 300, 500, 1000, 2000, 4000, 8000, 15000, 20000,
 //ExponentialDist randomNum(meanDelay, generatorSeed, offset); // constrcutor
 */
 
+int i = 0;                    // count number of sending times
+unsigned long t2 = 0;
+unsigned long t1;
+int count = 0;
+int count2 = 0;
+
 std::string message(packetSize, 'A');
 
-int num_transmission = 0; // count number of successful transmission
+int num_transmission = 0; // count # successful transmission
 
 unsigned long sendPacket(IPAddress& address) {
   if (!Udp.beginPacket(address, serverPort)) {
@@ -87,6 +98,32 @@ void connectToServer() {
   }
 }
 
+//void benchOut() {
+//    Serial.println(t1-t2);
+//    count += 1;
+//    if(count == 200) {
+//      count = 0;
+//      i += 1;
+//      Serial.println("delay changed ... ");
+//      if(i == 13) {
+//       Serial.println("finish the experiment!\n");
+//       delay(999999999); 
+//       }
+//      delay(200000);
+//    }
+//}
+
+void printStatus() {
+  Serial.print(timeStamp);
+  Serial.print("\t");
+  Serial.println(num_transmission);
+}
+
+void capture() {
+  timeStamp = micros() / 1000000; // change to unit in second
+  printFlag = true;
+}
+
 void setup() {
   Serial.begin(500000);
   Serial.println();
@@ -98,34 +135,33 @@ void setup() {
   connectToServer();
   // pinMode(16, OUTPUT); // set PIN16 as an output
   WiFi.printDiag(Serial);
+  tick.attach(timeInterval, capture);
+  Serial.println("Starting transmitting...");
 }
 
-int i = 0;                    // count number of sending times
-unsigned long t2 = 0;
-unsigned long t1;
-int count = 0;
-
 void loop() {
-
-  // generate inf packets
-    t1 = micros();
+    // t1 = micros();
+    /* test esp delay distribution
     // reduce the serial.println()
-    if(t2 % 500 == 0){
-      Serial.println(t1-t2);
-      count += 1;
-      if(count == 200) {
-        count = 0;
-        i += 1;
-        Serial.println("delay changed ... ");
-        if(i == 13) {
-         Serial.println("finish the experiment!\n");
-         delay(999999999); 
-         }
-        delay(4000);
+    if(t2 % 2000 == 0){
+      benchOut(); }  */
+    sendPacket(receiverIP); // send an packet to server
+    // t2 = micros();
+    delayMicroseconds(Delay[i]);         // in microseconds
+    // print transmitter status every 5 seconds
+    if(printFlag) {
+      // printStatus();
+      printFlag = false;
+      count2 += 1;
+    }
+    if(count2 >= 20) {
+      count2 = 0;
+      i = i + 1;
+      Serial.println("delay param changes ...");
+      delay(50000);
+      if(i == 13) {
+        Serial.println("experiment finished!");
+        delay(999999);
       }
     }
-    sendPacket(receiverIP); // send an packet to server
-    t2 = micros();
-    delayMicroseconds(Delay[i]);         // us, add constant delay below 1us
-  ///////////////////////////////
 } // end loop
