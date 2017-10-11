@@ -4,6 +4,9 @@
 #include <Ticker.h> // use for batch experiment
 //#include "exponential.h" // use exponential delay
 
+// Use Timer1
+#include "TimerOne.h"
+
 #define CONFIG 2
 
 /* DEVICE 1 */
@@ -41,10 +44,10 @@ const int packetSize = 1500;
 double Delay[13] = {0, 100, 200, 300, 500, 1000, 2000, 4000, 8000, 15000, 20000, 50000, 100000};
 
 /* setup exponential random delay class
-//const double meanDelay = 50000; // {0, 0.1, 0.2, 0.3, 0.5, 1, ,2 ,4 ,8, 10, 15, 20, 50, 100, 200}
-//const int generatorSeed = 123;
-//const int offset = 0;
-//ExponentialDist randomNum(meanDelay, generatorSeed, offset); // constrcutor
+  //const double meanDelay = 50000; // {0, 0.1, 0.2, 0.3, 0.5, 1, ,2 ,4 ,8, 10, 15, 20, 50, 100, 200}
+  //const int generatorSeed = 123;
+  //const int offset = 0;
+  //ExponentialDist randomNum(meanDelay, generatorSeed, offset); // constrcutor
 */
 
 int i = 0;                    // count number of sending times
@@ -73,25 +76,25 @@ void connectToServer() {
   //Clear old configuration
   WiFi.softAPdisconnect();
   WiFi.disconnect();
-  
+
   WiFi.mode(WIFI_STA); // STA to AP
   WiFi.setPhyMode(WIFI_PHY_MODE_11N); // set WiFi PHY mode
-  
+
   WiFi.setOutputPower(dBm);
   delay(300);
-  
+
   Serial.print("Attempting to connect to SSID: ");
   Serial.print(ssid);
-  
+
   WiFi.begin(ssid);
-  
+
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
     delay(1000);
   }
   Serial.println("Connected to wifi");
   Serial.println("");
-  
+
   Serial.println("\nStarting connection to server...");
   if (!Udp.begin(localPort)) {
     Serial.println("UDP connection failed");
@@ -107,7 +110,7 @@ void connectToServer() {
 //      Serial.println("delay changed ... ");
 //      if(i == 13) {
 //       Serial.println("finish the experiment!\n");
-//       delay(999999999); 
+//       delay(999999999);
 //       }
 //      delay(200000);
 //    }
@@ -131,7 +134,7 @@ void setup() {
 
   Serial.print("Using configuration: ");
   Serial.println(CONFIG);
-  
+
   connectToServer();
   // pinMode(16, OUTPUT); // set PIN16 as an output
   WiFi.printDiag(Serial);
@@ -140,28 +143,34 @@ void setup() {
 }
 
 void loop() {
-    // t1 = micros();
-    /* test esp delay distribution
+  // t1 = micros();
+  /* test esp delay distribution
     // reduce the serial.println()
     if(t2 % 2000 == 0){
-      benchOut(); }  */
-    sendPacket(receiverIP); // send an packet to server
-    // t2 = micros();
-    delayMicroseconds(Delay[i]);         // in microseconds
-    // print transmitter status every 5 seconds
-    if(printFlag) {
-      // printStatus();
-      printFlag = false;
-      count2 += 1;
+    benchOut(); }  */
+  
+  sendPacket(receiverIP); // send an packet to server
+  
+  // t2 = micros();
+  
+  delayMicroseconds(Delay[i]);         // in microseconds
+  
+  // print transmitter status every 5 seconds
+  if (printFlag) {
+    // printStatus();
+    printFlag = false;
+    count2 += 1;
+  }
+  
+  if (count2 >= 20) {
+    count2 = 0;
+    i = i + 1;
+    Serial.println("delay param changes ...");
+    delay(50000);
+    if (i == 13) {
+      Serial.println("experiment finished!");
+      delay(999999);
     }
-    if(count2 >= 20) {
-      count2 = 0;
-      i = i + 1;
-      Serial.println("delay param changes ...");
-      delay(50000);
-      if(i == 13) {
-        Serial.println("experiment finished!");
-        delay(999999);
-      }
-    }
+  }
+  
 } // end loop
