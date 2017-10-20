@@ -38,7 +38,9 @@ Ticker tick;
 // using different packet size to calculate the WiFi transmission rate
 const int packetSize = 1500;
 
+// Delay 50us to 100 ms
 double Delay[13] = {50, 100, 200, 300, 500, 1000, 2000, 4000, 8000, 15000, 20000, 50000, 100000};
+double currentDelay;
 
 /* setup exponential random delay class
   //const double meanDelay = 50000; // {0, 0.1, 0.2, 0.3, 0.5, 1, ,2 ,4 ,8, 10, 15, 20, 50, 100, 200}
@@ -47,17 +49,19 @@ double Delay[13] = {50, 100, 200, 300, 500, 1000, 2000, 4000, 8000, 15000, 20000
   //ExponentialDist randomNum(meanDelay, generatorSeed, offset); // constrcutor
 */
 
+// Initial values
 int delaySetting = 0;                    // count number of sending times
 unsigned long t2 = 0;
 unsigned long t1;
 int count = 0;
-int count2 = 0;
+int count_till_print = 20;
 bool experimentDone = false;
 
 std::string message(packetSize, 'A');
 
 int num_transmission = 0; // count # successful transmission
 
+// Function to send packet
 unsigned long sendPacket(IPAddress& address) {
   if (!Udp.beginPacket(address, serverPort)) {
     Serial.println("Error in Udp.beginPacket()");
@@ -122,7 +126,7 @@ void printStatus() {
 
 void capture() {
   timeStamp = micros() / 1000000; // change to unit in second
-  printFlag = true;
+  count_till_print = count_till_print - 1;
 }
 
 void setup() {
@@ -135,12 +139,19 @@ void setup() {
 
   connectToServer();
   // pinMode(16, OUTPUT); // set PIN16 as an output
+
+  
   WiFi.printDiag(Serial);
+
+  // timer interrupt every 5 seconds
   tick.attach(TIME_INTERVAL, capture);
+  yield();
+  
   Serial.println("Starting transmitting...");
 }
 
 void loop() {
+  
   while(experimentDone == false){
     // t1 = micros();
     /* test esp delay distribution
@@ -148,29 +159,41 @@ void loop() {
       if(t2 % 2000 == 0){
       benchOut(); }  */
     
-    sendPacket(receiverIP); // send an packet to server
+    sendPacket(receiverIP);                     // send an packet to server
     
     // t2 = micros();
 
     // Delay transmission
-    delayMicroseconds(Delay[delaySetting]);         // in microseconds
-    
-    if (count2 >= 20) {
-      count2 = 0;
-      ++delaySetting;
+    if ( currentDelay < 1000 ){
+      yield();
+      delayMicroseconds(Delay[delaySetting]);   // in microseconds
+    } else {
+      // check that this is accurate time
+      delay(currentDelay / 1000);               // in milliseconds
+    }
+
+    // Wait for 20 captures (20 * 5 seconds = 100 seconds
+    if (count_till_print == 0) {
+      count_till_print = 20;
+      ++delaySetting;                     // Change delay
+      currentDelay = Delay[delaySetting];
       
-      Serial.println("Change the delay (ms) ...\nFrom");
-      Serial.print(Delay[delaySetting-1]); Serial.print(" to "); 
+
+      // Stop program if we go through all delays
       if (delaySetting == 13) {
         Serial.println("experiment done!");
         experimentDone = true;
         break;
       }
       else{
-        Serial.println(Delay[delaySetting]);
+        Serial.println("Change the delay (us) ...\nFrom");
+        Serial.print(Delay[delaySetting-1]); Serial.print(" to ");
+        Serial.println(currentDelay);
       }
-      delay(50000);
+      
+      delay(10000);  // 10 sec delay
     }
     
-  } // end while 1
+  } // end while experiment not done
+
 } // end loop
